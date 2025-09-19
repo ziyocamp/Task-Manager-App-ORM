@@ -1,8 +1,8 @@
-from .database import engine
+from .database import engine, Base
+from .models import User
 
 
 def main():
-    conn = engine.connect()
-
-    conn.close()
+    
+    Base.metadata.create_all(engine)
 

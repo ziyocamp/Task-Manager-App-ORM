@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, URL
+from sqlalchemy.ext.declarative import declarative_base
 
 from .config import config
 
@@ -13,3 +14,4 @@ url = URL.create(
 )
 
 engine = create_engine(url)
+Base = declarative_base()
