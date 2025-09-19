@@ -1,7 +1,10 @@
 from hashlib import sha256
 
 from .database import engine, Base, LocalSession
-from .models import User
+from .models import User, Task
+
+
+Base.metadata.create_all(engine)
 
 
 def add_user():
@@ -71,14 +74,48 @@ def login():
     print("user topilmadi")
 
 
-def main():
+def add_task():
 
+    email = "valialiyev@gmail.com"
+
+    db = LocalSession()
+    
+    user = db.query(User).filter(User.email == email).first()
+    
+    task01 = Task(
+        name='task 01',
+        user=user
+    )
+    task02 = Task(
+        name='task 02',
+        user=user
+    )
+
+    db.add_all([task01, task02])
+    db.commit()
+
+def get_task():
+    # email = "valialiyev@gmail.com"
+
+    db = LocalSession()
+    
+    # user = db.query(User).filter(User.email == email).first()
+
+    # print(user.tasks)
+
+    task = db.query(Task).filter(Task.task_id == 2).first()
+
+    print(task.user.fullname)
+
+def main():
+    
+    # add_task()
     # add_user()
     # update_user()
     # delete_user()
     # get_users()
-    login()
+    # login()
+    get_task()
 
     
-    Base.metadata.create_all(engine)
 
