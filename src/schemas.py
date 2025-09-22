@@ -11,3 +11,7 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
+
+class TaskCreation(BaseModel):
+    name: str
+    description: str | None = None

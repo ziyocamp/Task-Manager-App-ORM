@@ -1,5 +1,4 @@
 import sys
-from hashlib import sha256
 from getpass import getpass
 from pprint import pprint
 
@@ -8,7 +7,7 @@ from passlib.context import CryptContext
 
 from .database import engine, Base, LocalSession
 from .models import User, Task
-from .schemas import UserRegister, UserLogin
+from .schemas import UserRegister, UserLogin, TaskCreation
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
@@ -53,23 +52,71 @@ def login():
         if is_valid:
             print("login qildingiz")
 
+            return user
+
+    except ValidationError as e:
+        pprint(e.errors())
+
+def show_tasks(user):
+    db = LocalSession()
+
+    tasks = db.query(Task).filter_by(user_id=user.user_id).all()
+
+    if tasks:
+        print(tasks)
+    else:
+        print("task yoq")
+
+def add_task(user):
+    name = input("Name: ")
+    description = input("Description: ")
+
+    try:
+        task_data = TaskCreation(name=name, description=description)
+
+        db = LocalSession()
+        task = Task(name=task_data.name, description=task_data.description, user_id=user.user_id)
+        db.add(task)
+        db.commit()
+        print('task qoshildi')
+
     except ValidationError as e:
         pprint(e.errors())
 
 def main():
-    while True:
-        print("---Menu---")
-        print("1. Register")
-        print("2. Login")
-        print("0. Exit")
+    user = None
 
-        choice = input("> ")
-        if choice == '1':
-            register()
-        elif choice == '2':
-            login()
-        elif choice == '0':
-            sys.exit()
+    while True:
+
+        if user:
+            print("---Menu---")
+            print("1. My Tasks")
+            print("2. Add Task")
+            print("0. Log Out")
+
+            choice = input("> ")
+            if choice == '1':
+                show_tasks(user)
+            elif choice == '2':
+                add_task(user)
+            elif choice == '0':
+                user = None
+            else:
+                print("bunday menu mavjud emas.")
+
         else:
-            print("bunday menu mavjud emas.")
+            print("---Menu---")
+            print("1. Register")
+            print("2. Login")
+            print("0. Exit")
+
+            choice = input("> ")
+            if choice == '1':
+                register()
+            elif choice == '2':
+                user = login()
+            elif choice == '0':
+                sys.exit()
+            else:
+                print("bunday menu mavjud emas.")
 
