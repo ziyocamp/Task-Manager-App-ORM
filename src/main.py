@@ -1,121 +1,75 @@
+import sys
 from hashlib import sha256
+from getpass import getpass
+from pprint import pprint
+
+from pydantic import ValidationError
+from passlib.context import CryptContext
 
 from .database import engine, Base, LocalSession
 from .models import User, Task
+from .schemas import UserRegister, UserLogin
 
+pwd_context = CryptContext(schemes=["bcrypt"])
 
 Base.metadata.create_all(engine)
 
+def register():
+    firstname = input("First Name: ")
+    lastname = input("Last Name: ")
+    email = input("Email: ")
+    password = getpass("Password: ")
 
-def add_user():
+    try:
+        user_data = UserRegister(first_name=firstname,last_name=lastname,email=email, password=password)
 
-    email = "samisamiyev@gmail.com"
-    password = "1234"
-    first_name = "sami"
-    last_name = "samiyev"
+        hashed_password = pwd_context.hash(password)
 
-    db = LocalSession()
-    
-    user = db.query(User).filter(User.email == email).first()
-    if user:
-        print("user mavjud")
-        return
-   
-    hashed_password = sha256(password.encode()).hexdigest()
-    new_user = User(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        hashed_password=hashed_password
-    )
+        db = LocalSession()
+        user = User(
+            first_name=user_data.first_name, 
+            last_name=user_data.last_name,
+            email=user_data.email,
+            hashed_password=hashed_password
+        )
+        db.add(user)
+        db.commit()
+        print('royxatdan otdingiz')
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-def get_users():
-    db = LocalSession()
-
-    users = db.query(User).all()
-    print(users)
-
-def update_user():
-    db = LocalSession()
-
-    user = db.query(User).filter_by(email = "alivaliyev@gmail.com").first()
-    user.first_name = "Updated Ali"
-
-    db.commit()
-
-def delete_user():
-    db = LocalSession()
-
-    user = db.query(User).filter_by(email = "alivaliyev@gmail.com").first()
-    
-    db.delete(user)
-
-    db.commit()
+    except ValidationError as e:
+        pprint(e.errors())
 
 def login():
-    email = "valialiyev@gmail.com"
-    password = "1234"
+    email = input("Email: ")
+    password = getpass("Password: ")
 
-    hashed_password = sha256(password.encode()).hexdigest()
+    try:
+        user_data = UserLogin(email=email, password=password)
+        
+        db = LocalSession()
+        user = db.query(User).filter_by(email=user_data.email).first()
 
-    db = LocalSession()
+        is_valid = pwd_context.verify(user_data.password, user.hashed_password)
+        if is_valid:
+            print("login qildingiz")
 
-    user = db.query(User).filter(
-        User.email == email, 
-        User.hashed_password == hashed_password).first()
-    if user:
-        print("siz login qilindingiz")
-        return
-    
-    print("user topilmadi")
-
-
-def add_task():
-
-    email = "valialiyev@gmail.com"
-
-    db = LocalSession()
-    
-    user = db.query(User).filter(User.email == email).first()
-    
-    task01 = Task(
-        name='task 01',
-        user=user
-    )
-    task02 = Task(
-        name='task 02',
-        user=user
-    )
-
-    db.add_all([task01, task02])
-    db.commit()
-
-def get_task():
-    # email = "valialiyev@gmail.com"
-
-    db = LocalSession()
-    
-    # user = db.query(User).filter(User.email == email).first()
-
-    # print(user.tasks)
-
-    task = db.query(Task).filter(Task.task_id == 2).first()
-
-    print(task.user.fullname)
+    except ValidationError as e:
+        pprint(e.errors())
 
 def main():
-    
-    # add_task()
-    # add_user()
-    # update_user()
-    # delete_user()
-    # get_users()
-    # login()
-    get_task()
+    while True:
+        print("---Menu---")
+        print("1. Register")
+        print("2. Login")
+        print("0. Exit")
 
-    
+        choice = input("> ")
+        if choice == '1':
+            register()
+        elif choice == '2':
+            login()
+        elif choice == '0':
+            sys.exit()
+        else:
+            print("bunday menu mavjud emas.")
 
